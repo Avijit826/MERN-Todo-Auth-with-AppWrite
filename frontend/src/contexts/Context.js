@@ -1,5 +1,7 @@
 import { createContext, useState } from "react"
 import axios from "axios"
+import {account, ID } from "../config/config"
+
 
 const Context = createContext()
 
@@ -7,7 +9,7 @@ const ContextProvider = ({children}) =>{
     const url = process.env.REACT_APP_API_URL
     const [todos, setTodos] = useState()
     const [update, setUpdate] = useState(false)
-    const [token, setToken] = useState("")
+    const [token, setToken] = useState()
     const [search, setSearch] = useState("")
     const header = { headers:{'Authorization': "Bearer "+token}}
 
@@ -20,28 +22,33 @@ const ContextProvider = ({children}) =>{
     }
 
     const userLogin = async (email, password) => {
-    await axios
-      .post(`${url}/login`, { email, password })
-      .then((res) => {
-        setToken(res.data.token)
-      })
-      .catch((error) => {
-        console.error(`ERROR>>>...................\n${error.message}`)
-      })
-    return token
-  }
+      const promise = account.createEmailSession(email, password );
 
-  const userSignUp = async (name, email, password) => {
-    await axios
-      .post(`${url}/signup`, { name, email, password })
-      .then((res) => {
-        setToken(res.data.token)
-      })
-      .catch((error) => {
-        console.error(`ERROR>>>...................\n${error.message}`)
-      })
-    return token
-  }
+      promise.then(function (response) {
+          console.log(response.$id);
+
+          const promise = account.getSession(response.$id);
+          promise.then(function (response) {
+              console.log(response); // Success
+          }, function (error) {
+              console.log(error); // Failure
+          });// Success
+      }, function (error) {
+          console.log(error); // Failure
+      });
+    }
+
+    const userSignUp = async (name, email, password) => {
+      const promise = account.create( ID.unique(), email, password );
+
+      promise.then(function (response) {
+          console.log(response.$id); 
+          return userLogin()// Success
+      }, function (error) {
+          console.log(error); // Failure
+      });
+    }
+
     const getTodos = ()=>{
         axios
       .get(`${url}/todo`,header)

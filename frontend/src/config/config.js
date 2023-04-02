@@ -8,4 +8,4 @@ client
 
 const account = new Account(client);
 
-exports = { account, ID }
+export { account, ID }
